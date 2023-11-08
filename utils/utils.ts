@@ -15,4 +15,8 @@ export const utils = {
     generateWalletName: () => {
 
     },
+
+    toDecimal: (amount:number ,num:number) => {
+        return Number(amount.toFixed(num))
+    }
 }
