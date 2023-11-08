@@ -1,0 +1,9 @@
+{
+  "extends": [
+    "@eslint-kit/patch",
+    "@eslint-kit/base",
+    "@eslint-kit/typescript",
+    "@eslint-kit/node"
+  ],
+  "parser": "@typescript-eslint/parser"
+}
