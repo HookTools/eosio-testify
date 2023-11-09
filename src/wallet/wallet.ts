@@ -14,11 +14,12 @@ export class createWallet {
     walletName:string
     walletPermission:string
     chain: chainInit
-    constructor(privateKey:string,name:string, chain:chainInit) {
+    constructor(privateKey:string,walletPermission:string,name:string, chain:chainInit) {
         this.privateKey = privateKey
         this.publicKey = ecc.privateToPublic(privateKey);
         this.walletName = name
         this.chain = chain
+        this.walletPermission = walletPermission
     }  
 
     private sendTransaction = async (data:any[]) => {
@@ -68,16 +69,29 @@ export class createWallet {
       this.chain.get
     }
 
-    getRam = () => {
-      awa
+    getRam = async () => {
+      await this.chain.getTableRows({
+        code: 'eosio',
+        index_position: "1",
+        json: true,
+        key_type: 'i64',
+        limit: 1,
+        lower_bound: "",
+        reverse: false,
+        scope: 'eosio',
+        show_payer: false,
+        table: 'rammarket',
+        upper_bound: ''
+      })
     }
 
-    getCPU = () => {
-
+    getCPU = async (account:string) => {
+      await this.chain.getAccount(account)
     }
 
-    pushTransaction = (to:string, action:string, data:any) => {
-      this.sendTransaction()
+    pushTransaction = async (data:{to:string,action:string, data:any}[]) => {
+      const response = await this.sendTransaction(data)
+      return response
     }
 
     transfer = (amount:number,to:string, memo:string = '') => {
@@ -89,27 +103,47 @@ export class createWallet {
       }}])
     }
 
-    buyRam = (amount:number) => {
-
+    buyRAM = (bytes:number,receiver:string) => {
+      this.sendTransaction([{to: 'eosio',action: 'buyrambytes', data: {
+        payer: this.walletName,
+        bytes,
+        receiver
+      }}])
     }
 
-    buyRamWax = (amount:number) => {
-
+    buyRamWax = (amount:number,receiver:string) => {
+      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
+        payer: this.walletName,
+        quant: amount.toFixed(8) + " WAX",
+        receiver
+      }}])
     }
 
     stakeCPU = () => {
-
+      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
+        payer: this.walletName,
+        quant: amount.toFixed(8) + " WAX",
+        receiver
+      }}])
     }
 
-    sellRam = () => {
-
+    sellRAM = () => {
+      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
+        payer: this.walletName,
+        quant: amount.toFixed(8) + " WAX",
+        receiver
+      }}])
     }
 
-    sellCPI = () => {
-
+    sellCPU = () => {
+      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
+        payer: this.walletName,
+        quant: amount.toFixed(8) + " WAX",
+        receiver
+      }}])
     }
 
-    deployContract = () => {
+    deployContract = (path_:string, buildCode:string) => {
       this.sendTransaction(to)
     }
 

@@ -67,6 +67,7 @@ export interface GetTableRows {
     table: string
     scope: string
     index_position?: string
+    json?: boolean
     key_type?: string
     encode_type?: string
     lower_bound?:string

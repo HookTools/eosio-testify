@@ -16,6 +16,10 @@ export class chainInit {
         })
     }
 
+    build = async (path_:string, buildCode:string) => {
+        
+    }
+
     getAccount = async (account_name:string) => {
         try{
             const response = await this.instanse.post('/get_account',{
