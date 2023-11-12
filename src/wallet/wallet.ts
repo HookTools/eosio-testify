@@ -1,9 +1,9 @@
 
-import fetch from 'node-fetch'
+// import fetch from 'node-fetch'
 import { TextDecoder, TextEncoder } from 'util'
 import { chainInit } from '../chain/chainInit'
-const { Api, JsonRpc, RpcError } = require('eosjs')
-const { JsSignatureProvider } = require('eosjs/dist/eosjs-jssig')
+import { Api, JsonRpc, RpcError } from 'eosjs'
+import { JsSignatureProvider } from 'eosjs/dist/eosjs-jssig'
 
 const ecc = require('eosjs-ecc')
 
@@ -22,15 +22,15 @@ export class createWallet {
         this.walletPermission = walletPermission
     }  
 
-    private sendTransaction = async (data:any[]) => {
+    private sendTransaction = async (data:{to:string, action:string, data:any}[]) => {
         const rpc = new JsonRpc(this.chain.RPC, { fetch })
         const signatureProvider = new JsSignatureProvider([this.privateKey])
       
         const api = new Api({
           rpc,
           signatureProvider,
-          textEncoder: new TextEncoder(),
-          textDecoder: new TextDecoder(),
+          // textEncoder: new TextEncoder(),
+          // textDecoder: new TextDecoder(),
         })
 
         const actions: any[] = data.map(action => ({
@@ -54,10 +54,10 @@ export class createWallet {
               }
             )
         
-            return `'Transaction ID:', ${result.transaction_id}`
+            return `'Transaction ID:', ${result}`
           } catch (error) {
             if (error instanceof RpcError) {
-              throw new Error(error!.json.error.what)
+              // throw new Error(error?.json.error.what)
             } else {
               throw new Error(`'An error occurred' ${error}`)
             }
@@ -65,28 +65,19 @@ export class createWallet {
           
     }
 
-    getBalance = () => {
-      this.chain.get
+    getBalance = async () => {
+      const response = await this.chain.getCurrencyBalance({code: "eosio.token", account: this.walletName,symbol: "WAX"})
+      return response
     }
 
     getRam = async () => {
-      await this.chain.getTableRows({
-        code: 'eosio',
-        index_position: "1",
-        json: true,
-        key_type: 'i64',
-        limit: 1,
-        lower_bound: "",
-        reverse: false,
-        scope: 'eosio',
-        show_payer: false,
-        table: 'rammarket',
-        upper_bound: ''
-      })
+      const response = await this.chain.getAccount(this.walletName)
+      return response.total_resources?.ram_bytes
     }
 
-    getCPU = async (account:string) => {
-      await this.chain.getAccount(account)
+    getCPU = async () => {
+      const response = await this.chain.getAccount(this.walletName)
+      return response.total_resources?.cpu_weight
     }
 
     pushTransaction = async (data:{to:string,action:string, data:any}[]) => {
@@ -94,60 +85,91 @@ export class createWallet {
       return response
     }
 
-    transfer = (amount:number,to:string, memo:string = '') => {
-      this.sendTransaction([{to: 'eosio.token',action: 'transfer', data: {
+    transfer = async (amount:number,to:string, memo:string = '') => {
+     try{
+      await this.sendTransaction([{to: 'eosio.token',action: 'transfer', data: {
         from: this.walletName,
         to,
-        amount: amount.toFixed(8) + " WAX",
+        quantity: amount.toFixed(8) + " WAX",
         memo
       }}])
+
+      return true
+    } catch(e) {
+      console.log(e)
+      return false
+    }
+     }
+
+
+    buyRAM = async (bytes:number,receiver:string) => {
+      try{
+        await this.sendTransaction([{to: 'eosio',action: 'buyrambytes', data: {
+          payer: this.walletName,
+          bytes,
+          receiver
+        }}])
+      } catch(e) {
+        console.log(e)
+      }
     }
 
-    buyRAM = (bytes:number,receiver:string) => {
-      this.sendTransaction([{to: 'eosio',action: 'buyrambytes', data: {
-        payer: this.walletName,
-        bytes,
-        receiver
-      }}])
-    }
-
-    buyRamWax = (amount:number,receiver:string) => {
-      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
-        payer: this.walletName,
-        quant: amount.toFixed(8) + " WAX",
-        receiver
-      }}])
-    }
-
-    stakeCPU = () => {
-      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
-        payer: this.walletName,
-        quant: amount.toFixed(8) + " WAX",
-        receiver
-      }}])
-    }
-
-    sellRAM = () => {
-      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
+    buyRamWax = async (amount:number,receiver:string) => {
+      await this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
         payer: this.walletName,
         quant: amount.toFixed(8) + " WAX",
         receiver
       }}])
     }
 
-    sellCPU = () => {
-      this.sendTransaction([{to: 'eosio',action: 'buyram', data: {
-        payer: this.walletName,
-        quant: amount.toFixed(8) + " WAX",
-        receiver
+    stakeCPUorNET = async (CPU:number, NET:number) => {
+      await this.sendTransaction([{to: 'eosio',action: 'delegatebw', data: {
+        from: this.walletName,
+        receiver: this.walletName,
+        stake_net_quantity: NET.toFixed(8) + " WAX",
+        stake_cpu_quantity: CPU.toFixed(8) + " WAX",
+        transfer: false
+      }}])
+    }
+
+    sellRAM = async (bytes:number) => {
+      await this.sendTransaction([{to: 'eosio',action: 'sellram', data: {
+        account: this.walletName,
+        bytes
+      }}])
+    }
+
+    unstakeCPUorNET = async (CPU:number,NET:number) => {
+      await this.sendTransaction([{to: 'eosio',action: 'undelegatebw', data: {
+        from: this.walletName,
+        receiver: this.walletName,
+        unstake_net_quantity: NET.toFixed(8) + " WAX",
+        unstake_cpu_quantity: CPU.toFixed(8) + " WAX",
+        transfer: false
       }}])
     }
 
     deployContract = (path_:string, buildCode:string) => {
-      this.sendTransaction(to)
+      //build(path_,buildCode);
+      //this.sendTransaction()
     }
 
-    clearContract = () => {
-        this.sendTransaction(to)
+    clearContract = async () => {
+      await this.sendTransaction([{to: 'eosio',action: 'setcode', data:{
+        account: this.walletName,
+        vmtype: 0,
+        vmversion: 0,
+        code: "",
+        memo: ''
+      }},{to: 'eosio',action: 'setabi', data:{
+        account: this.walletName,
+        abi: "",
+        memo: ''
+      }}])
+
+    }
+
+    createNewWallet = async(keys:any[]) => {
+      
     }
 }
