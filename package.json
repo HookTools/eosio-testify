@@ -1,26 +1,36 @@
 {
-  "name": "package",
-  "version": "1.0.0",
+  "name": "eosio-testify",
+  "version": "0.0.5",
   "description": "",
-  "main": "./src/index.ts",
+  "main": "./out/index.js",
+  "types": "./out/index.d.ts",
+  "bin": {
+    "eosio-testify": {
+      "build": "./out/build/buildcmd.js"
+    }
+  },
   "scripts": {
-    "test": "mocha --require ts-node/register src/test/test.ts"
+    "test": "mocha --require ts-node/register src/test/**/*.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/chai": "^4.3.10",
+    "adm-zip": "^0.5.10",
     "axios": "^1.6.0",
     "chai": "^4.3.10",
     "eosjs": "^22.1.0",
     "eosjs-ecc": "^4.0.7",
     "node-fetch": "^3.3.2",
-    "text-encoding": "^0.7.0"
+    "text-encoding": "^0.7.0",
+    "unzipper": "^0.10.14"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^10.0.4",
+    "@types/unzipper": "^0.10.9",
     "mocha": "^10.2.0",
     "ts-mocha": "^10.0.0",
     "tsconfig-paths": "^4.2.0"

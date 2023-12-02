@@ -44,16 +44,14 @@ class chainInit {
                 const response = yield this.instanse.post('/v1/chain/get_account', {
                     account_name
                 });
-                console.log(response.data);
                 return response.data;
             }
             catch (e) {
-                console.log(e);
                 if (e instanceof axios_1.AxiosError) {
-                    return ((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
+                    throw new Error((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
                 }
                 else {
-                    return e;
+                    throw new Error("An unexpected error occurred");
                 }
             }
         });
@@ -97,7 +95,7 @@ class chainInit {
         });
         this.getCurrencyBalance = (data) => __awaiter(this, void 0, void 0, function* () {
             const response = yield this.instanse.post('/v1/chain/get_currency_balance', Object.assign({}, data));
-            return response.data;
+            return response.data[0];
         });
         this.getCurrencyStats = (data) => __awaiter(this, void 0, void 0, function* () {
             const response = yield this.instanse.post('/get_currency_stats', Object.assign({}, data));
